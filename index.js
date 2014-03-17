@@ -297,12 +297,9 @@ var normalizeLocalLinks = function(str, options) {
   return localLinks(str).map(function(link) {
     link.url = path.normalize(link.url);
 
-    var files = file.expand('*', options.glob);
-    files = files.map(function(filepath) {
-      return path.resolve(path.join(options.glob.cwd, filepath));
-    });
+    file.expand('**', options.glob).filter(function(filepath) {
+      filepath = path.resolve(path.join(options.glob.cwd, filepath));
 
-    files.filter(function(filepath) {
       if(filepath.indexOf(link.url) !== -1) {
         link.url = relative(process.cwd(), filepath);
       }
@@ -340,12 +337,12 @@ log.info('>> Scanning files');
 
 var tmpl = '* [<%= text %>](<%= url %><%= alt %>)';
 
-var globLinks = function(patterns, options) {
+var writeLinks = function(dest, src, options) {
   options = options || {};
   options.cwd = options.cwd || process.cwd();
   options.tmpl = options.tmpl || tmpl;
 
-  return file.expand(patterns, options).map(function(filepath) {
+  var result = file.expand(src, options).map(function(filepath) {
     filepath = relative(process.cwd(), path.join(options.cwd, filepath));
 
     var content = file.readFileSync(filepath);
@@ -361,11 +358,21 @@ var globLinks = function(patterns, options) {
     };
 
     links.push(normalizeLocalLinks(content, opts));
+
+    // links = links.map(function(link) {
+    //   console.log(link);
+    //   // return
+    // });
+
     return _.flatten(links).map(function(obj) {
+      obj.url = relative(dest, obj.url);
+    console.log(obj);
       return template(tmpl, obj);
     }).join('\n');
   }).join('\n');
+
+  file.writeFileSync(dest, result);
 };
 
 
-file.writeFileSync('test/actual/nested.md', globLinks('**/*.md', {cwd: 'test/links'}));
+writeLinks('test/actual/nested.md', '**/*.md', {cwd: 'test/links'});
