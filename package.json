@@ -1,0 +1,32 @@
+{
+  "name": "markdown-links",
+  "description": "Utilities for extracting and organizing markdown links.",
+  "version": "0.0.1",
+  "homepage": "https://github.com/jonschlinkert/markdown-links",
+  "author": {
+    "name": "Jon Schlinkert",
+    "url": "https://github.com/jonschlinkert"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonschlinkert/markdown-links.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jonschlinkert/markdown-links/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/jonschlinkert/markdown-links/blob/master/LICENSE-MIT"
+    }
+  ],
+  "main": "index.js",
+  "dependencies": {
+    "marked": "~0.3.1",
+    "lodash": "~2.4.1",
+    "fs-utils": "~0.3.6",
+    "template": "~0.1.5",
+    "verbalise": "0.0.1",
+    "relative": "~0.1.2"
+  }
+}
