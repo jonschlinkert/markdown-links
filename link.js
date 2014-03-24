@@ -1,12 +1,91 @@
-var path = require('path');
-var file = require('fs-utils');
-var relative = require('relative');
-var glob = require('globule');
-var frep = require('frep');
-var log = require('verbalise');
-var _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
+
+const file = require('fs-utils');
+const frep = require('frep');
+const glob = require('globule');
+const log = require('verbalise');
+const relative = require('relative');
+const _ = require('lodash');
 
 
+var compare = function(arr) {
+  return arr.sort(function (a, b) {
+    return a.split('/').length - b.split('/').length;
+  });
+};
+
+var compareFn = function(arr, options) {
+  var opts = _.extend({sortOrder: 'asc'}, options);
+  var sortOrder = opts.sortOrder.toLowerCase();
+
+  return arr.sort(function (a, b) {
+    a = a.split('/').length;
+    b = b.split('/').length;
+
+    var result = a > b ? 1 : a < b ? -1 : 0;
+
+    if(sortOrder === 'desc') {
+      return result * -1;
+    }
+
+    return result;
+  });
+};
+
+var lookupFiles = function(dir, order) {
+  order = order || 'asc';
+  var files = [];
+
+  var stat = fs.statSync(dir);
+  if (stat.isFile()) {
+    return dir;
+  }
+
+  fs.readdirSync(dir).forEach(function (filepath) {
+    filepath = path.resolve(path.join(dir, filepath));
+    var stat = fs.statSync(filepath);
+
+    if (stat.isDirectory()) {
+      files = files.concat(lookupFiles(filepath));
+      return;
+    }
+    if (!stat.isFile()) {
+      return;
+    }
+
+    files.push(relative(process.cwd(), filepath));
+  });
+
+  files = compareFn(files, {sortOrder: order});
+  return files;
+};
+
+
+var matches = function(files, patterns) {
+  var positive = [];
+
+  log.info('\n');
+  log.success('  [files]\t', files);
+  log.warn('  [patterns]\t', patterns);
+
+  for (var i = 0; i < patterns.length; i++) {
+    for (var j = 0; j < files.length; j++) {
+      patterns[i] = patterns[i].replace(/\\/g, '/');
+      if (new RegExp(patterns[i] + '$', 'g').test(files[j])) {
+        positive.push(files[j]);
+      }
+    }
+  }
+
+  log.bold('  [match]\t', positive);
+  return positive;
+};
+
+// console.log(new RegExp('nested/two.md' + '$', 'g').test('links/two.md'));
+// var files = exports.lookupFiles('test/links');
+// var results = exports.matches(files, ['three.md', 'four.md', 'nested/two.md']);
+// console.log(results);
 
 // var re = /\[(\[[^\]]*\]|[^\[\]]*)(?:\]\([ \t]*)(<?(?:(?:[^\(]*?\([^\)]*?\)\S*?)|(?:.*?))>?)((?:[ \t]*\"(?:.*?)\"[ \t]*)?)(?:\))/g;
 var linkRegex = new RegExp(_.values({
@@ -18,139 +97,69 @@ var linkRegex = new RegExp(_.values({
   close:  '(?:\\))'
 }).join(''), 'g');
 
-var mapLinks = function (str) {
-  var matches = [], i = -1;
-  str.replace(linkRegex, function (match, text, url, alt) {
-    i++;
-    matches.push({
-      index: i,
-      match: match,
-      text: text,
-      url: url || '',
-      alt: alt || ''
-    } || {});
-  });
-
-  return matches;
-};
-
 var normalizeFiles = function(src, options) {
   options = _.extend({filter: 'isFile', cwd: ''}, options || {});
   return file.expand(src, options).map(function(filepath) {
-    return path.resolve(options.cwd, filepath);
+    return relative(options.cwd, filepath);
   });
 };
 
-// var fixLinks = function(src, dest, options) {
-//   return normalizeFiles(src, options).filter(function(filepath) {
-//     dest = dest || process.cwd();
+var files = lookupFiles('test/links');
+// console.log(files);
 
-//     var str = file.readFileSync(filepath);
-//     return str.replace(linkRegex, function (match, text, url, alt) {
-//       url = path.normalize(url);
+var resolveLinks = function(src, dest) {
+  var str = file.readFileSync(src);
 
-
-//       return file.expand(src, options).filter(function(filepath) {
-//         filepath = path.join(options.cwd, filepath);
-
-//         if(file.isMatch('**/' + url, filepath)) {
-//           console.log(relative(dest, file.match('**/' + url, filepath)[0]));
-//           return relative(dest, file.match('**/' + url, filepath)[0]);
-//         }
-//       });
-//     });
-//   });
-// };
-
-var str = file.readFileSync('test/links/nested/four.md');
-
-var resolveLinks = function(str, dest) {
-  var files = normalizeFiles('**', {cwd: 'test/links'});
   var patterns = [
     {
+      // Find links
       pattern: linkRegex,
       replacement: function (match, text, url, alt) {
+        // Normalize the url before attempting to match
         url = path.normalize(url);
-        var fullpath = file.match('**/' + url, files)[0];
-        return match.replace(url, relative(dest, fullpath));
+        var filepath = matches(files, [url])[0];
+
+        log.verbose.success('  [source]\t', file.name(src));
+        log.verbose.bold('  [dest]\t', dest);
+        log.verbose.warn('  [paths]\t', filepath[0]);
+
+        return match.replace(url, relative(dest, String(filepath)));
       }
     }
   ];
-
-  console.log(frep.strWithArr(str, patterns));
   return frep.strWithArr(str, patterns);
-
 };
 
-// file.writeFileSync('test/actual/links/links.md', resolveLinks(str, 'test/actual'));
 
 var opts = {
   srcBase: 'test/links',
   destBase: 'test/actual/links'
 };
 
-
 function buildLinks(patterns) {
-  var concat = [];
+  var concatenated = [];
+  log.info();
 
   glob.findMapping(patterns, opts).map(function(fp) {
-    var src = file.readFileSync(fp.src);
-    concat.push(src);
+    var dest = fp.dest, result;
 
-    var dest = fp.dest;
-    var result = resolveLinks(src, opts.destBase);
+    fp.src.map(function(filepath) {
+      log.verbose.bold('  [reading] ', filepath);
+      result = resolveLinks(filepath, fp.dest);
+      concatenated.push(filepath);
 
-    // Write the result
-    file.writeFileSync(dest, result);
+      // Write the result
+      file.writeFileSync(dest, result);
+      log.verbose.success('  [writing] ', fp.dest);
+    })
   });
 
-  result = resolveLinks(concat.join('\n\n'), './');
-  file.writeFileSync('README.md', result);
+  // var result = concatenated.map(function(filepath) {
+  //   return resolveLinks(filepath, './');
+  // }).join('\n\n');
+
+  // log.verbose.success('  [writing] ', 'README.md');
+  // file.writeFileSync('README.md', result);
 }
 
 buildLinks('**/*.md');
-
-// // console.log(resolveLinks(str));
-// resolveLinks(str, 'test/actual');
-
-// var request = require('request');
-// request('http://assemble.io', function (err, resp) {
-//   if (resp.statusCode === 200) {
-//     console.log('exists');
-//     return;
-//   }
-//   console.log('doesn\'t exist');
-//   return;
-// });
-
-// console.log(fixLinks('**', {cwd: 'test/links'}));
-// var foo = fixLinks('**', 'test/actual', {cwd: 'test/links'});
-
-
-// var normalizeLocalLinks = function(str, options) {
-//   options = options || {};
-
-//   return localLinks(str).map(function(link) {
-//     link.url = path.normalize(link.url);
-
-//     file.expand('**', options.glob).filter(function(filepath) {
-//       filepath = path.resolve(path.join(options.glob.cwd, filepath));
-
-//       if(filepath.indexOf(link.url) !== -1) {
-//         link.url = relative(process.cwd(), filepath);
-//       }
-//     });
-
-//     log.info('>> Writing local link:', link.url);
-
-//     return {
-//       text: link.text,
-//       url: link.url,
-//       alt: link.alt
-//     };
-//   });
-// };
-
-
-
-// fixLinks('test/actual/nested.md', '**/*.md', {cwd: 'test/links'});
