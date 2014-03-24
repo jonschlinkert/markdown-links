@@ -90,16 +90,25 @@ var opts = {
 };
 
 
+function buildLinks(patterns) {
+  var concat = [];
 
-glob.findMapping('**/*.md', opts).map(function(fp) {
-  var src = file.readFileSync(fp.src);
-  var dest = fp.dest;
-  var result = resolveLinks(src, opts.destBase);
+  glob.findMapping(patterns, opts).map(function(fp) {
+    var src = file.readFileSync(fp.src);
+    concat.push(src);
 
-  // Write the result
-  file.writeFileSync(dest, result);
-});
+    var dest = fp.dest;
+    var result = resolveLinks(src, opts.destBase);
 
+    // Write the result
+    file.writeFileSync(dest, result);
+  });
+
+  result = resolveLinks(concat.join('\n\n'), './');
+  file.writeFileSync('README.md', result);
+}
+
+buildLinks('**/*.md');
 
 // // console.log(resolveLinks(str));
 // resolveLinks(str, 'test/actual');

@@ -2,4 +2,4 @@
 
 > This is two
 
-`one.md`: [two](one.md)
+`one.md`: [one](./one.md)

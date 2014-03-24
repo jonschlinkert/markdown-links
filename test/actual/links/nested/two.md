@@ -2,4 +2,4 @@
 
 > This is nested/two
 
-`one.md`: [two](../../links/one.md)
+`one.md`: [one](./../../links/one.md)

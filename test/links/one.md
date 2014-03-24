@@ -2,5 +2,5 @@
 
 > This is one
 
-`two.md`: [two](two.md)
-`deeper/two.md`: [two nested](deeper/two.md)
+`two.md`: [two](./two.md)
+`deeper/two.md`: [deeper/two](./deeper/two.md)
