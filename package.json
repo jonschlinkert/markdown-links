@@ -27,6 +27,11 @@
     "fs-utils": "~0.3.6",
     "template": "~0.1.5",
     "verbalise": "0.0.1",
-    "relative": "~0.1.2"
+    "relative": "~0.1.2",
+    "frep": "~0.1.7"
+  },
+  "devDependencies": {
+    "verb": "~0.1.20",
+    "globule": "~0.2.0"
   }
 }
