@@ -1,4 +1,5 @@
 {
+  "esnext": true,
   "boss": true,
   "curly": true,
   "eqeqeq": true,
@@ -9,6 +10,13 @@
   "noarg": true,
   "node": true,
   "sub": true,
-  "undef": false,
-  "unused": true
+  "undef": true,
+  "unused": true,
+  "globals": {
+    "define": true,
+    "before": true,
+    "after": true,
+    "describe": true,
+    "it": true
+  }
 }
