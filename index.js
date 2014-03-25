@@ -1,3 +1,6 @@
+const log = require('verbalise');
+log.runner = 'link-builder';
+
 var resolveLinks = require('./lib/resolve');
 
 var opts = {
