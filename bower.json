@@ -1,6 +1,6 @@
 {
-  "name": "markdown-symbols",
-  "version": "0.2.2",
+  "name": "markdown-links",
+  "version": "0.0.1",
   "main": [
     "index.js"
   ]

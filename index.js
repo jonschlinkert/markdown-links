@@ -1,7 +1,10 @@
-const log = require('verbalise');
-log.runner = 'link-builder';
+const argv = require('minimist')(process.argv.slice(2));
+const log = require('verbalize');
+const resolveLinks = require('./lib/resolve');
 
-var resolveLinks = require('./lib/resolve');
+// `verbalize` settings
+log.runner = 'link-fixer';
+log.mode.verbose = argv.v || argv.verbose || false;
 
 
 function fixLinks(dir, dest) {

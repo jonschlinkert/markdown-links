@@ -29,7 +29,9 @@
     "frep": "~0.1.7",
     "verbalize": "~0.1.0",
     "request": "~2.34.0",
-    "cheerio": "~0.13.1"
+    "cheerio": "~0.13.1",
+    "minimist": "0.0.8",
+    "cwd": "~0.2.2"
   },
   "devDependencies": {
     "verb": "~0.1.20",
