@@ -3,11 +3,12 @@ log.runner = 'link-builder';
 
 var resolveLinks = require('./lib/resolve');
 
-var opts = {
-  src: ['**/*.md'],
-  dest: 'test/actual/fixtures',
-  glob: {cwd: 'test/fixtures'}
-};
+
+function fixLinks(dir, dest) {
+  resolveLinks(['**/*.md'], dest, {cwd: dir});
+}
 
 
-resolveLinks(opts.src, opts.dest, opts.glob);
+fixLinks('test/fixtures/links', 'test/actual/links/');
+fixLinks('test/fixtures/docs', 'test/actual/docs/');
+fixLinks('test/fixtures/nested', 'test/actual/nested/');
