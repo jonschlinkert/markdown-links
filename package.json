@@ -32,6 +32,7 @@
     "cheerio": "~0.13.1"
   },
   "devDependencies": {
-    "verb": "~0.1.20"
+    "verb": "~0.1.20",
+    "chai": "~1.9.1"
   }
 }
