@@ -1,42 +1,31 @@
-/*global describe, beforeEach, it*/
-'use strict';
+var expect = require('chai').expect;
+var file = require('fs-utils');
 
-var path    = require('path');
-var helpers = require('yeoman-generator').test;
+// Local libs
+var verb = require('../');
 
+describe('options.config', function () {
 
-describe('verb generator', function () {
-  beforeEach(function (done) {
-    helpers.testDirectory(path.join(__dirname, 'temp'), function (err) {
-      if (err) {
-        return done(err);
-      }
-
-      this.app = helpers.createGenerator('verb:app', [
-        '../../app'
-      ]);
-      done();
-    }.bind(this));
+  describe('when the default config object is not overridden:', function () {
+    it('should extend the context with data from package.json', function () {
+      var actual = verb.process();
+      var expected = file.readJSONSync('test/expected/config-default.json');
+      expect(actual.name).to.eql(expected.name);
+    });
   });
 
-  it('creates expected files', function (done) {
-    var expected = [
-      // Runtime config
-      '.verbrc.yml',
-      'package.json',
-      'docs/README.tmpl.md'
-    ];
-
-    helpers.mockPrompt(this.app, {
-      projectName: 'assemble-project',
-      description: 'The most interesting project in the world > Verb',
-      username: 'assemble',
-      author: 'Assemble'
-    });
-    this.app.options['skip-install'] = true;
-    this.app.run({}, function () {
-      helpers.assertFile(expected);
-      done();
+  describe('when a custom config object is defined:', function () {
+    it('should extend that data into the context, but not data from package.json', function () {
+      var actual = verb.process('', {
+        config: {
+          name: 'Custom Config',
+          repository: {
+            "type": "git",
+            "url": "https://github.com/assemble/verb.git"
+          },
+        }
+      });
+      expect(actual.context.name).to.eql('Custom Config');
     });
   });
 });

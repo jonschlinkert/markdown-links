@@ -5,8 +5,8 @@ var resolveLinks = require('./lib/resolve');
 
 var opts = {
   src: ['**/*.md'],
-  dest: 'test/actual',
-  glob: {cwd: 'test/links'}
+  dest: 'test/actual/fixtures',
+  glob: {cwd: 'test/fixtures'}
 };
 
 
